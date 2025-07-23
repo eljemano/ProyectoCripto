@@ -1,0 +1,38 @@
+
+services:
+  db:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}          # <--- ¡MODIFICAR ESTAS LÍNEAS!
+      POSTGRES_USER: ${POSTGRES_USER}      # <--- ¡MODIFICAR ESTAS LÍNEAS!
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} # <--- ¡MUY IMPORTANTE MODIFICAR ESTA!
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  app:
+    build: .
+    ports:
+      - "8000:8000" # Si tu app es una API web
+    volumes:
+      - ./app:/app
+    environment:
+      DB_HOST: db
+      DB_NAME: ${POSTGRES_DB}              # <--- ¡MODIFICAR ESTAS LÍNEAS!
+      DB_USER: ${POSTGRES_USER}            # <--- ¡MODIFICAR ESTAS LÍNEAS!
+      DB_PASSWORD: ${POSTGRES_PASSWORD}    # <--- ¡MUY IMPORTANTE MODIFICAR ESTA!
+      OLLAMA_URL_REMOTE: ${OLLAMA_URL_REMOTE} # <-- YA ESTABA BIEN PARA EL .ENV
+      CRYPTO_API_KEY_ID: ${CRYPTO_API_KEY_ID}   # <--- AGREGAR ESTAS LÍNEAS
+      CRYPTO_API_SECRET: ${CRYPTO_API_SECRET}   # <--- AGREGAR ESTAS LÍNEAS
+    depends_on:
+      - db
+      # Si ya quitaste el servicio 'ollama' local en un paso anterior, déjalo comentado o bórralo
+      # - ollama
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  # Si ya quitaste el volumen 'ollama_models', déjalo comentado o bórralo
+  # ollama_models:
