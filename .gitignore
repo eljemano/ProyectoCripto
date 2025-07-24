@@ -1,0 +1,27 @@
+# Archivos de entorno con variables sensibles
+.env
+
+# Ignorar directorios de entorno virtual de Python
+.venv/
+env/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+
+# Ignorar directorios y archivos de Docker que no deben ir al repositorio
+# Los volúmenes de Docker se gestionan por Docker y no deben ir al repositorio
+*.log
+*.swp
+.DS_Store
+Thumbs.db
+
+# Archivos específicos de Docker
+.dockerignore
+*.tmp
+*.bak
+
+# Si tienes algún archivo de base de datos local SQLite o similar
+*.sqlite
+*.sql
+*.db
