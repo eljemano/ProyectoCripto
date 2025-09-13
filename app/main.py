@@ -1,58 +1,52 @@
-import psycopg2
+# -*- coding: utf-8 -*-
 import os
-import time
-# import requests # Comenta si no tienes requests o no lo usas en la parte de BD
+import sys
+from pathlib import Path
+from dotenv import load_dotenv
+import traceback
+import locale
 
-DB_HOST = os.getenv("DB_HOST")
-DB_NAME = os.getenv("DB_NAME")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
+#sys.stdout = open(sys.stdout.fileno(), mode='w', encoding='utf-8', buffering=1)
+#sys.stderr = open(sys.stderr.fileno(), mode='w', encoding='utf-8', buffering=1)
 
-# Comentar las líneas de Ollama para esta prueba
-# OLLAMA_URL_REMOTE = os.getenv("OLLAMA_URL_REMOTE")
-# print(f"DEBUG: Intentando conectar a Ollama en {OLLAMA_URL_REMOTE}")
+# Resto de tu código, incluyendo la carga de variables de entorno
+# Añadir la carpeta raiz del proyecto a la ruta de Python
+project_root = str(Path(__file__).parent.parent)
 
-print(f"DEBUG: Conectando a DB_HOST={DB_HOST}, DB_NAME={DB_NAME}, DB_USER={DB_USER}")
+if project_root not in sys.path:
+    sys.path.insert(0, str(project_root))
 
+def load_environment_variables():
+    """Carga variables de entorno desde .env en la raiz del proyecto"""
+    env_path = Path(__file__).parent.parent / ".env"
+    if not env_path.exists():
+        raise FileNotFoundError(f"Archivo .env no encontrado en {env_path}")
+    
+    load_dotenv(dotenv_path=env_path, encoding='utf-8') 
+    print("Variables cargadas desde:", env_path)
 
-conn = None
-for i in range(10): # Aumentar reintentos para dar tiempo a DB
+if __name__ == "__main__":
     try:
-        print(f"Intentando conectar a la base de datos (Intento {i+1}/10)...")
-        conn = psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASSWORD)
-        print("¡Conexión a la base de datos exitosa!")
-        break
-    except psycopg2.OperationalError as e:
-        print(f"Error de conexión a DB: {e}. Reintentando en 5 segundos...")
-        time.sleep(5)
+        load_environment_variables()
+        
+        # Verificacion explicita de variables.
+        required_vars = ["DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME"]
+        missing_vars = [var for var in required_vars if not os.getenv(var)]
+        
+        if missing_vars:
+            print(f"Faltan variables: {missing_vars}. Por favor, revise su archivo .env.")
+        else:
+            print("Variables de entorno criticas:")
+            for var in required_vars:
+                print(f"{var}: {os.getenv(var)}")
+             #RETIRAR SI FUNCIONA MODELS.PY Y DABATASE.PY
+            from app.databases.database import get_db_engine, create_db_tables
+            #from app.databases.db_unificado import get_db_engine, create_db_tables
+
+            
+            engine = get_db_engine()
+            create_db_tables(engine)
+            
     except Exception as e:
-        print(f"Ocurrió un error inesperado al conectar a DB: {e}")
-        break
-
-if conn:
-    try:
-        cur = conn.cursor()
-        cur.execute("CREATE TABLE IF NOT EXISTS crypto_prices (id SERIAL PRIMARY KEY, symbol VARCHAR(10) NOT NULL, price NUMERIC(20, 8) NOT NULL, timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, api_response JSONB);")
-        conn.commit()
-        print("Tabla 'crypto_prices' verificada/creada.")
-
-        # Lógica para interactuar con Ollama (TEMPORALMENTE COMENTADO PARA ESTA PRUEBA)
-        # try:
-        #     # ... tu código de Ollama ...
-        # except Exception as e:
-        #     print(f"Error al llamar a Ollama: {e}")
-
-
-    except Exception as e:
-        print(f"Error durante las operaciones de DB: {e}")
-    finally:
-        if cur: cur.close()
-        if conn: conn.close()
-        print("Conexiones cerradas.")
-else:
-    print("No se pudo establecer conexión con la base de datos.")
-
-print("Aplicación Python iniciada y realizando tareas iniciales (sin Ollama).")
-# Mantén el script corriendo indefinidamente si es una aplicación de servicio
-# while True:
-#     time.sleep(60)
+        print(f"Error al iniciar la aplicacion: {str(e)}")
+        traceback.print_exc()

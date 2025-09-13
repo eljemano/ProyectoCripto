@@ -1,0 +1,1 @@
+# Analisis tecnico e indicadores

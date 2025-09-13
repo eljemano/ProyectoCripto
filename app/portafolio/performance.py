@@ -1,0 +1,1 @@
+# Calculo de PnL y metricas

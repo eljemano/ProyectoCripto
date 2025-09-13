@@ -1,38 +1,27 @@
 
+#version: '3.8' # Mantenerlo por claridad, aunque v2 lo ignore
 services:
+  # Servicio de la base de datos PostgreSQL
   db:
-    image: postgres:16
+    image: postgres:16 # Puedes usar :13-alpine para una imagen más ligera si lo prefieres
+    container_name: docker_postgres # Nombre fijo para el contenedor de la BD
     ports:
-      - "5432:5432"
+      - "5432:5432" # Mapea el puerto 5432 del contenedor al 5432 de tu máquina local
+    env_file: # Carga las variables de entorno desde .env para la BD
+      - .env
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}          # <--- ¡MODIFICAR ESTAS LÍNEAS!
-      POSTGRES_USER: ${POSTGRES_USER}      # <--- ¡MODIFICAR ESTAS LÍNEAS!
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} # <--- ¡MUY IMPORTANTE MODIFICAR ESTA!
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}   # <- aqui se crea crypto_db automaticamente
+
     volumes:
       - db_data:/var/lib/postgresql/data
     restart: unless-stopped
-
-  app:
-    build: .
-    ports:
-      - "8000:8000" # Si tu app es una API web
-    volumes:
-      - ./app:/app
-    environment:
-      DB_HOST: db
-      DB_NAME: ${POSTGRES_DB}              # <--- ¡MODIFICAR ESTAS LÍNEAS!
-      DB_USER: ${POSTGRES_USER}            # <--- ¡MODIFICAR ESTAS LÍNEAS!
-      DB_PASSWORD: ${POSTGRES_PASSWORD}    # <--- ¡MUY IMPORTANTE MODIFICAR ESTA!
-      OLLAMA_URL_REMOTE: ${OLLAMA_URL_REMOTE} # <-- YA ESTABA BIEN PARA EL .ENV
-      CRYPTO_API_KEY_ID: ${CRYPTO_API_KEY_ID}   # <--- AGREGAR ESTAS LÍNEAS
-      CRYPTO_API_SECRET: ${CRYPTO_API_SECRET}   # <--- AGREGAR ESTAS LÍNEAS
-    depends_on:
-      - db
-      # Si ya quitaste el servicio 'ollama' local en un paso anterior, déjalo comentado o bórralo
-      # - ollama
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
-  db_data:
-  # Si ya quitaste el volumen 'ollama_models', déjalo comentado o bórralo
-  # ollama_models:
+  db_data: # Define el volumen de datos para PostgreSQL

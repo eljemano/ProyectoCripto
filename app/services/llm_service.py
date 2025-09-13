@@ -1,0 +1,1 @@
+# Interaccion con modelo LLM (Gemini/Ollama)
